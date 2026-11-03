@@ -3,7 +3,10 @@
 import { useState } from "react";
 import StepBar from "./_component/StepBar";
 import UploadBox from "./_component/UploadBox"; // Make sure to import your UploadBox component
-import { CountPill } from "./_component";
+import { CountPill } from "./_component/CountPill";
+import { LabelButton } from "./_component/LabelButton";
+import { PhotoTile, ProgressBar } from "./_component";
+import RoundCounter from "./_component/RoundCounter";
 
 const steps = [
   { id: 1, label: "Upload" },
@@ -58,16 +61,22 @@ const App = () => {
             </h2>
 
             <CountPill />
+            <div className="flex flex-col gap-2 max-w-xs">
+              <PhotoTile />
+              <LabelButton />
+            </div>
           </div>
         )}
 
         {/* ===== STEP 3: TRAIN ===== */}
         {currentStep === 3 && (
-          <div className="p-7 border rounded-[16px] border-[#dfe4ee] flex flex-col gap-[20px]">
+          <div className="p-7 border text-black rounded-[16px] border-[#dfe4ee] flex flex-col gap-[20px]">
             <h2 className="font-['Nunito'] font-bold text-[22px]">
               Step 3: Train
             </h2>
             <p className="text-[#868e96]">Train your model.</p>
+            <RoundCounter />
+            <ProgressBar />
           </div>
         )}
 
@@ -86,15 +95,13 @@ const App = () => {
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40"
-          >
+            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40">
             Back
           </button>
           <button
             onClick={handleNext}
             disabled={currentStep === steps.length}
-            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40"
-          >
+            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40">
             Next
           </button>
         </div>

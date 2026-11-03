@@ -1,8 +1,33 @@
+import React, { useRef } from "react";
 import { UploadIcon } from "lucide-react";
 
-export const UploadBox = () => {
+export const UploadBox = ({ onFilesSelected }) => {
+  const fileInputRef = useRef(null);
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0 && onFilesSelected) {
+      onFilesSelected(files);
+    }
+  };
+
   return (
-    <div className="border-[3px] dashed border-[#dfe4ee] rounded-[16px] bg-[#fafbfc] px-9 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-[#f1f3f5] transition-colors">
+    <div
+      onClick={handleClick}
+      className="border-[3px] border-dashed border-[#dfe4ee] rounded-[16px] bg-[#fafbfc] px-9 py-8 flex flex-col items-center justify-center cursor-pointer hover:bg-[#f1f3f5] transition-colors"
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        multiple
+        className="hidden"
+      />
       <div className="w-12 h-12 rounded-full bg-[#e7ecfd] flex items-center justify-center mb-3">
         <UploadIcon className="text-[#3b5bdb] w-6 h-6" />
       </div>
