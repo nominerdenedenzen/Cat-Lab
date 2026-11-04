@@ -1,0 +1,27 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum Label {
+    CAT
+    NOT_CAT
+}
+
+enum Ground {
+    training 
+    testing
+}
+
+model Photo {
+    id          String   @id @default(uuid())
+    storagePath String   @unique
+    label       Label?
+    ground      Ground?  @default(training)
+    createdAt   DateTime @default(now())
+
+    @@map("photo")
+}

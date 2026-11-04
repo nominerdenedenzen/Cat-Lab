@@ -95,13 +95,15 @@ const App = () => {
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40">
+            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40"
+          >
             Back
           </button>
           <button
             onClick={handleNext}
             disabled={currentStep === steps.length}
-            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40">
+            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40"
+          >
             Next
           </button>
         </div>
