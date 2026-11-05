@@ -6,3 +6,4 @@ export * from "./LabelButton";
 export * from "./PhotoTile";
 export * from "./RoundCounter";
 export * from "./ProgressBar";
+export * from "./AccuracyChart"; // 🟡 CHANGED: export the new chart

@@ -1,49 +1,34 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+// 🟡 CHANGED: removed `useState` and the `supabase` import.
+// UploadBox runs in the BROWSER, and the browser must never see your secret
+// SUPABASE_SERVICE_ROLE_KEY (it would also be `undefined` here and crash).
+// The upload now happens on the server in src/app/api/photos/route.ts.
+import React, { useRef } from "react";
 import { UploadIcon, Loader2 } from "lucide-react";
-import { supabase } from "../_lib/supabase";
 
-export const UploadBox = ({ onPhotoUploaded }) => {
-  const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
+// 🟡 CHANGED: the props now match what page.tsx actually passes:
+// `onFilesSelected` (before it was `onPhotoUploaded`, which page.tsx never sent).
+type UploadBoxProps = {
+  onFilesSelected: (files: File[]) => void;
+  uploading?: boolean; // page.tsx tells us when it is busy uploading
+};
+
+export const UploadBox = ({ onFilesSelected, uploading = false }: UploadBoxProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
-    fileInputRef.current?.click();
+    // 🟡 CHANGED: don't open the file picker again while an upload is running
+    if (!uploading) fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event) => {
+  // 🟡 CHANGED: this is now very simple — it just hands the chosen files to page.tsx.
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
+    if (files.length > 0) onFilesSelected(files);
 
-    setUploading(true);
-    try {
-      for (const file of files) {
-        const fileName = `${Date.now()}-${file.name}`;
-        const storagePath = `uploads/${fileName}`;
-
-        // 1. Upload directly from UploadBox to Supabase Storage
-        const { data, error } = await supabase.storage
-          .from("photos")
-          .upload(storagePath, file);
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        // 2. Pass the resulting storage path up to the parent component
-        if (onPhotoUploaded && data) {
-          onPhotoUploaded(data.path);
-        }
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Error uploading photo to Supabase.");
-    } finally {
-      setUploading(false);
-      // Reset input so the same file can be selected again if needed
-      if (event.target) event.target.value = "";
-    }
+    // Reset input so the same file can be selected again if needed
+    event.target.value = "";
   };
 
   return (

@@ -6,9 +6,10 @@ datasource db {
     provider = "postgresql"
 }
 
+// 🟡 CHANGED (cat → dog): was CAT / NOT_CAT
 enum Label {
-    CAT
-    NOT_CAT
+    DOG
+    NOT_DOG
 }
 
 enum Ground {
