@@ -6,7 +6,6 @@ interface ProgressBarProps {
 }
 
 export const ProgressBar = ({ current = 6, total = 10 }: ProgressBarProps) => {
-    
   const percentage = total > 0 ? (current / total) * 100 : 0;
   const clampedProgress = Math.min(Math.max(percentage, 0), 100);
 

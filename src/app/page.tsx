@@ -18,6 +18,36 @@ const steps = [
 const App = () => {
   // ===== STATE: which step we are on (1, 2, 3 or 4) =====
   const [currentStep, setCurrentStep] = useState(1);
+  const [uploading, setUploading] = useState(false);
+
+  // ===== HANDLE FILE UPLOAD TO SUPABASE VIA API =====
+  const handleFilesSelected = async (files: File[]) => {
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/photos", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+
+        const data = await response.json();
+        console.log("Photo uploaded successfully:", data);
+      }
+      alert("All photos uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Error uploading photos.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // ===== GO TO NEXT STEP =====
   const handleNext = () => {
@@ -49,7 +79,12 @@ const App = () => {
             <h2 className="font-['Nunito'] font-bold text-[22px]">
               Step 1: Add your photos
             </h2>
-            <UploadBox />
+            <UploadBox onFilesSelected={handleFilesSelected} />
+            {uploading && (
+              <p className="text-sm text-[#3b5bdb]">
+                Uploading photos to Supabase...
+              </p>
+            )}
           </div>
         )}
 
@@ -95,15 +130,13 @@ const App = () => {
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40"
-          >
+            className="px-6 py-3.5 rounded-[14px] border border-[#dfe4ee] font-['Nunito'] font-bold text-[17px] text-[#495057] disabled:opacity-40">
             Back
           </button>
           <button
             onClick={handleNext}
             disabled={currentStep === steps.length}
-            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40"
-          >
+            className="px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40">
             Next
           </button>
         </div>
