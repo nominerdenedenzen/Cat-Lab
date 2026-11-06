@@ -7,11 +7,14 @@ const BUCKET = "photos";
 // GET /api/photos → all photos from the database, each with a public URL
 export async function GET() {
   try {
-    const photos = await prisma.photo.findMany({ orderBy: { createdAt: "asc" } });
+    const photos = await prisma.photo.findMany({
+      orderBy: { createdAt: "asc" },
+    });
 
     const photosWithUrl = photos.map((photo) => ({
       ...photo,
-      url: supabase.storage.from(BUCKET).getPublicUrl(photo.storagePath).data.publicUrl,
+      url: supabase.storage.from(BUCKET).getPublicUrl(photo.storagePath).data
+        .publicUrl,
     }));
 
     return NextResponse.json(photosWithUrl);
@@ -30,7 +33,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Unique path so two photos with the same name don't overwrite each other
     const storagePath = `uploads/${Date.now()}-${file.name}`;
 
     const { error: uploadError } = await supabase.storage

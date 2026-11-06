@@ -1,17 +1,3 @@
-// 🟢 NEW FILE: the "brain" of Cat Lab.
-// 🟡 CHANGED (cat → dog): renamed from catModel.ts; the model now learns DOG vs NOT_DOG.
-//
-// How it works (transfer learning):
-//   1. MobileNet = a model Google already trained on millions of images.
-//      We ask it to turn each photo into a list of numbers ("features")
-//      that describe what is in the picture (fur, ears, eyes, ...).
-//   2. We train a tiny model of our own on those numbers, using YOUR labels
-//      (DOG / NOT_DOG) from Supabase. That's the part that "learns".
-//
-// Every function here is `async` and uses `await` (no `.then()`).
-// TensorFlow is loaded with `await import(...)` so it is only downloaded
-// in the browser when you actually train — not when the page first loads.
-
 import type { LayersModel, Tensor } from "@tensorflow/tfjs";
 import type { MobileNet } from "@tensorflow-models/mobilenet";
 
@@ -20,10 +6,8 @@ export type TrainingExample = {
   label: "DOG" | "NOT_DOG";
 };
 
-// We keep one MobileNet in memory so we only download it once
 let mobileNet: MobileNet | null = null;
 
-// Load TensorFlow.js (async, only when needed)
 async function getTf() {
   const tf = await import("@tensorflow/tfjs");
   await tf.ready();
@@ -87,7 +71,11 @@ export async function trainModel(
   // 2. Our tiny model: 1280 numbers in → 1 number out (chance it's a dog)
   const model = tf.sequential({
     layers: [
-      tf.layers.dense({ inputShape: [xs.shape[1]!], units: 64, activation: "relu" }),
+      tf.layers.dense({
+        inputShape: [xs.shape[1]!],
+        units: 64,
+        activation: "relu",
+      }),
       tf.layers.dense({ units: 1, activation: "sigmoid" }),
     ],
   });

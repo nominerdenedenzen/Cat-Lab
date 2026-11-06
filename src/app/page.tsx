@@ -1,90 +1,140 @@
 "use client";
 
+// STEP 1 ONLY: pick photos and preview them in the browser.
+// No Prisma / Supabase yet — photos live in React state (lost on refresh).
+
 import { useEffect, useState } from "react";
 import UploadBox from "./_component/UploadBox";
+import PhotoTile from "./_component/PhotoTile";
+import MainButton from "./_component/MainButton";
 
-type Photo = {
+type LocalPhoto = {
   id: string;
-  storagePath: string;
-  url: string;
+  name: string;
+  url: string; // temporary browser URL (URL.createObjectURL)
 };
 
+const STEPS = ["Add photos", "Label", "Train", "Test"];
+const MIN_PHOTOS = 4;
+
 const App = () => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
 
-  // Load all photos saved in the database
-  const loadPhotos = async () => {
-    const response = await fetch("/api/photos");
-    if (!response.ok) {
-      setMessage("Could not load photos.");
-      return;
-    }
-    setPhotos(await response.json());
-  };
-
+  // Free the temporary URLs when the page closes
   useEffect(() => {
-    loadPhotos();
+    return () => photos.forEach((p) => URL.revokeObjectURL(p.url));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Send each chosen file to /api/photos (Supabase + Prisma)
-  const handleFilesSelected = async (files: File[]) => {
-    setUploading(true);
-    setMessage("");
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/photos", { method: "POST", body: formData });
-      if (!response.ok) {
-        setMessage(`Failed to upload ${file.name}.`);
-        setUploading(false);
-        return;
-      }
-    }
-
-    await loadPhotos();
-    setMessage(`${files.length} photo(s) uploaded!`);
-    setUploading(false);
+  const handleFilesSelected = (files: File[]) => {
+    const added = files.map((file) => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }));
+    setPhotos((prev) => [...prev, ...added]);
   };
 
+  const handleRemove = (id: string) => {
+    setPhotos((prev) => {
+      const photo = prev.find((p) => p.id === id);
+      if (photo) URL.revokeObjectURL(photo.url);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  const ready = photos.length >= MIN_PHOTOS;
+
   return (
-    <div className="flex min-h-screen justify-center bg-gray-100 p-8">
-      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-2xl bg-white p-8 shadow-sm">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold text-gray-900">🐱 Cat Lab</h1>
-          <p className="text-gray-500">Upload your photos to get started.</p>
+    <div className="flex min-h-screen justify-center bg-[#f4f6fb] px-4 py-12 font-['Nunito']">
+      <div className="flex w-full max-w-3xl flex-col gap-8">
+        {/* Header */}
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="font-['Fredoka'] text-[44px] font-semibold leading-none text-[#212529]">
+            Cat Lab
+          </h1>
+          <p className="text-[17px] text-[#5d6779]">
+            Teach a computer to tell dogs from everything else.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold text-gray-900">Step 1: Add your photos</h2>
-          <UploadBox onFilesSelected={handleFilesSelected} uploading={uploading} />
-          {message && <p className="text-sm text-blue-600">{message}</p>}
+        {/* Step indicator */}
+        <div className="flex items-start justify-between gap-2">
+          {STEPS.map((label, i) => {
+            const active = i === 0;
+            return (
+              <div key={label} className="flex flex-1 items-center gap-2">
+                <div className="flex flex-col items-center gap-2">
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-[15px] font-bold ${
+                      active
+                        ? "border-[#3b5bdb] bg-[#3b5bdb] text-white"
+                        : "border-[#dfe4ee] bg-white text-[#868e96]"
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span
+                    className={`text-[15px] ${active ? "font-bold text-[#212529]" : "text-[#868e96]"}`}
+                  >
+                    {label}
+                  </span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className="mb-7 h-[2px] flex-1 rounded bg-[#dfe4ee]" />
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="flex flex-col gap-4">
+        {/* Step 1 card */}
+        <div className="flex flex-col gap-5 rounded-[16px] border border-[#dfe4ee] bg-white p-7">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[22px] font-bold text-[#212529]">Step 1: Add your photos</h2>
+            <p className="text-[15px] text-[#5d6779]">
+              Add at least {MIN_PHOTOS} photos — some with dogs, some without.
+            </p>
+          </div>
+
+          <UploadBox onFilesSelected={handleFilesSelected} />
+
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Your photos</h2>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-600">
-              {photos.length}
+            <h2 className="text-[17px] font-bold text-[#212529]">Your photos</h2>
+            <span className="rounded-full bg-[#edf2ff] px-[14px] py-[6px] text-[13px] font-bold text-[#3b5bdb]">
+              {photos.length} {photos.length === 1 ? "photo" : "photos"}
             </span>
           </div>
 
           {photos.length === 0 ? (
-            <p className="text-gray-500">No photos yet.</p>
+            <p className="py-6 text-center text-[15px] text-[#868e96]">No photos yet.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="aspect-square rounded-xl border border-gray-200 bg-gray-100 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${photo.url})` }}
-                />
+                <div key={photo.id} className="group relative">
+                  <PhotoTile url={photo.url} alt={photo.name} />
+                  <span
+                    onClick={() => handleRemove(photo.id)}
+                    title="Remove"
+                    className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[15px] font-bold text-[#5d6779] opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+                  >
+                    ×
+                  </span>
+                </div>
               ))}
             </div>
           )}
+
+          <div className="flex items-center justify-between gap-4 border-t border-[#dfe4ee] pt-5">
+            <span className="text-[14px] text-[#868e96]">
+              {ready ? "Looks good!" : `${MIN_PHOTOS - photos.length} more to go`}
+            </span>
+            <MainButton
+              label="Next: Label photos"
+              disabled={!ready}
+              onClick={() => alert("Step 2 comes next!")}
+            />
+          </div>
         </div>
       </div>
     </div>

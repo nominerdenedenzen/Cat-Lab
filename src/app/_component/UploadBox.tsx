@@ -1,43 +1,63 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 type UploadBoxProps = {
   onFilesSelected: (files: File[]) => void;
   uploading?: boolean;
 };
 
-export const UploadBox = ({ onFilesSelected, uploading = false }: UploadBoxProps) => {
+export const UploadBox = ({
+  onFilesSelected,
+  uploading = false,
+}: UploadBoxProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
 
-  const handleClick = () => {
-    if (!uploading) fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const pickImages = (list: FileList | null) => {
+    const files = Array.from(list || []).filter((f) =>
+      f.type.startsWith("image/"),
+    );
     if (files.length > 0) onFilesSelected(files);
-    event.target.value = "";
   };
 
   return (
     <div
-      onClick={handleClick}
-      className="flex cursor-pointer flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-8 py-10 hover:bg-gray-100"
+      onClick={() => !uploading && fileInputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        pickImages(e.dataTransfer.files);
+      }}
+      className={`flex cursor-pointer flex-col items-center gap-1 rounded-[16px] border-2 border-dashed px-8 py-10 font-['Nunito'] transition-colors ${
+        dragging
+          ? "border-[#3b5bdb] bg-[#edf2ff]"
+          : "border-[#dfe4ee] bg-[#f8f9fa] hover:border-[#3b5bdb] hover:bg-[#edf2ff]"
+      }`}
     >
       <input
         type="file"
         ref={fileInputRef}
-        onChange={handleFileChange}
+        onChange={(e) => {
+          pickImages(e.target.files);
+          e.target.value = "";
+        }}
         accept="image/*"
         multiple
         className="hidden"
       />
       <span className="text-3xl">📷</span>
-      <h2 className="text-base font-semibold text-gray-900">
-        {uploading ? "Uploading..." : "Click to choose photos"}
+      <h2 className="text-[17px] font-bold text-[#212529]">
+        {uploading ? "Uploading..." : "Click or drop photos here"}
       </h2>
-      <p className="text-sm text-gray-500">You can pick many photos at once</p>
+      <p className="text-[14px] text-[#868e96]">
+        You can pick many photos at once
+      </p>
     </div>
   );
 };
