@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import type { LayersModel } from "@tensorflow/tfjs"; // 🟡 CHANGED: type of our trained model
+import type { LayersModel } from "@tensorflow/tfjs";
 import StepBar from "./_component/StepBar";
-import UploadBox from "./_component/UploadBox"; // Make sure to import your UploadBox component
+import UploadBox from "./_component/UploadBox";
 import { CountPill } from "./_component/CountPill";
 import { LabelButton } from "./_component/LabelButton";
-import { PhotoTile, ProgressBar, AccuracyChart } from "./_component"; // 🟡 CHANGED: + AccuracyChart
+import { PhotoTile, ProgressBar, AccuracyChart } from "./_component";
 import RoundCounter from "./_component/RoundCounter";
-import { trainModel, predictFile } from "./_lib/dogModel"; // 🟡 CHANGED: the ML helpers
+import { trainModel, predictFile } from "./_lib/dogModel";
 
 const steps = [
   { id: 1, label: "Upload" },
@@ -17,11 +17,8 @@ const steps = [
   { id: 4, label: "Test" },
 ];
 
-// 🟡 CHANGED: how many training rounds (shown in RoundCounter as "x / 10")
 const TOTAL_ROUNDS = 10;
 
-// 🟡 CHANGED: what one photo from GET /api/photos looks like
-// 🟡 CHANGED (cat → dog): every "cat" in this file is now "dog" (labels, counts, text, 🐶)
 type Photo = {
   id: string;
   storagePath: string;
@@ -35,18 +32,18 @@ const App = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploading, setUploading] = useState(false);
 
-  // 🟡 CHANGED: Step 2 state — the photos loaded from Supabase/Prisma
+  // Step 2 state — the photos loaded from Supabase/Prisma
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
 
-  // 🟡 CHANGED: Step 3 state — training progress
+  // Step 3 state — training progress
   const [training, setTraining] = useState(false);
   const [trainStatus, setTrainStatus] = useState("");
   const [round, setRound] = useState(0);
   const [accuracies, setAccuracies] = useState<number[]>([]);
   const [model, setModel] = useState<LayersModel | null>(null);
 
-  // 🟡 CHANGED: Step 4 state — the test photo and the model's guess
+  // Step 4 state — the test photo and the model's guess
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [dogChance, setDogChance] = useState<number | null>(null);
   const [testing, setTesting] = useState(false);
@@ -65,7 +62,10 @@ const App = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
+          const body = await response.json().catch(() => ({}));
+          throw new Error(
+            `Failed to upload ${file.name}: ${body.error ?? response.statusText}`,
+          );
         }
 
         const data = await response.json();
@@ -74,13 +74,13 @@ const App = () => {
       alert("All photos uploaded successfully!");
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Error uploading photos.");
+      alert(error instanceof Error ? error.message : "Error uploading photos.");
     } finally {
       setUploading(false);
     }
   };
 
-  // 🟡 CHANGED: load all photos from the database (async/await, no .then)
+  // Load all photos from the database
   const loadPhotos = async () => {
     setLoadingPhotos(true);
     try {
@@ -96,13 +96,13 @@ const App = () => {
     }
   };
 
-  // 🟡 CHANGED: save a label when you click "Dog" / "Not dog"
+  // Save a label when you click "Dog" / "Not dog"
   const handleLabel = async (photo: Photo, choice: "dog" | "not dog") => {
-    const label = choice === "dog" ? "DOG" : "NOT_DOG"; // database uses DOG / NOT_DOG
-    // update the screen right away…
-    setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, label } : p)));
+    const label = choice === "dog" ? "DOG" : "NOT_DOG";
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === photo.id ? { ...p, label } : p)),
+    );
     try {
-      // …then save it in the database
       const response = await fetch(`/api/photos/${photo.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -112,11 +112,11 @@ const App = () => {
     } catch (error) {
       console.error(error);
       alert("Error saving label.");
-      await loadPhotos(); // put the screen back to what the database says
+      await loadPhotos();
     }
   };
 
-  // 🟡 CHANGED: train the model on every labeled photo
+  // Train the model on every labeled photo
   const handleTrain = async () => {
     const examples = photos
       .filter((p) => p.label !== null && p.ground !== "testing")
@@ -153,11 +153,11 @@ const App = () => {
     }
   };
 
-  // 🟡 CHANGED: ask the trained model about a new photo
+  // Ask the trained model about a new photo
   const handleTestFiles = async (files: File[]) => {
     if (!model) return;
     const file = files[0];
-    if (testPreview) URL.revokeObjectURL(testPreview); // free the old preview
+    if (testPreview) URL.revokeObjectURL(testPreview);
     setTestPreview(URL.createObjectURL(file));
     setDogChance(null);
     setTesting(true);
@@ -172,8 +172,7 @@ const App = () => {
     }
   };
 
-  // ===== GO TO NEXT STEP =====
-  // 🟡 CHANGED: now async — when we enter Step 2, load the photos first
+  // GO TO NEXT STEP
   const handleNext = async () => {
     if (currentStep < steps.length) {
       const nextStep = currentStep + 1;
@@ -182,14 +181,13 @@ const App = () => {
     }
   };
 
-  // ===== GO BACK ONE STEP =====
+  // GO BACK ONE STEP
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  // 🟡 CHANGED: counts for the CountPills
   const dogCount = photos.filter((p) => p.label === "DOG").length;
   const notDogCount = photos.filter((p) => p.label === "NOT_DOG").length;
 
@@ -209,7 +207,6 @@ const App = () => {
             <h2 className="font-['Nunito'] font-bold text-[22px]">
               Step 1: Add your photos
             </h2>
-            {/* 🟡 CHANGED: also pass `uploading` so the box shows the spinner */}
             <UploadBox
               onFilesSelected={handleFilesSelected}
               uploading={uploading}
@@ -229,16 +226,18 @@ const App = () => {
               Step 2: Label
             </h2>
 
-            {/* 🟡 CHANGED: CountPill now gets the props it needs (fixes the TS error) */}
             <div className="flex gap-2">
               <CountPill type="dog" label={`${dogCount} dogs`} />
               <CountPill type="not dog" label={`${notDogCount} not dogs`} />
             </div>
 
-            {/* 🟡 CHANGED: one tile + label buttons for every photo */}
-            {loadingPhotos && <p className="text-[#868e96]">Loading photos...</p>}
+            {loadingPhotos && (
+              <p className="text-[#868e96]">Loading photos...</p>
+            )}
             {!loadingPhotos && photos.length === 0 && (
-              <p className="text-[#868e96]">No photos yet — go back and upload some.</p>
+              <p className="text-[#868e96]">
+                No photos yet — go back and upload some.
+              </p>
             )}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {photos.map((photo) => (
@@ -269,16 +268,20 @@ const App = () => {
             <p className="text-[#868e96]">
               Train your model on {dogCount + notDogCount} labeled photos.
             </p>
-            {/* 🟡 CHANGED: real numbers instead of the default 6 / 10 */}
             <RoundCounter current={round} total={TOTAL_ROUNDS} />
             <ProgressBar current={round} total={TOTAL_ROUNDS} />
-            {/* 🟡 CHANGED: status text, Train button and accuracy chart */}
-            {trainStatus && <p className="text-sm text-[#3b5bdb]">{trainStatus}</p>}
+            {trainStatus && (
+              <p className="text-sm text-[#3b5bdb]">{trainStatus}</p>
+            )}
             <button
               onClick={handleTrain}
               disabled={training}
               className="self-start px-6 py-3.5 rounded-[14px] bg-[#3b5bdb] font-['Nunito'] font-bold text-[17px] text-white disabled:opacity-40">
-              {training ? "Training..." : model ? "Train again" : "Start training"}
+              {training
+                ? "Training..."
+                : model
+                  ? "Train again"
+                  : "Start training"}
             </button>
             <AccuracyChart accuracies={accuracies} />
           </div>
@@ -291,12 +294,16 @@ const App = () => {
               Step 4: Test
             </h2>
             <p className="text-[#868e96]">Test your model with a new photo.</p>
-            {/* 🟡 CHANGED: upload a photo → the model guesses (it is NOT saved to Supabase) */}
             {!model ? (
-              <p className="text-[#e8590c]">Train your model in Step 3 first.</p>
+              <p className="text-[#e8590c]">
+                Train your model in Step 3 first.
+              </p>
             ) : (
               <>
-                <UploadBox onFilesSelected={handleTestFiles} uploading={testing} />
+                <UploadBox
+                  onFilesSelected={handleTestFiles}
+                  uploading={testing}
+                />
                 {testPreview && (
                   <div className="flex items-center gap-6">
                     <div className="w-40">
@@ -308,7 +315,11 @@ const App = () => {
                           {dogChance >= 0.5 ? "🐶 Dog!" : "🚫 Not a dog"}
                         </div>
                         <div className="text-[#868e96]">
-                          {Math.round((dogChance >= 0.5 ? dogChance : 1 - dogChance) * 100)}% sure
+                          {Math.round(
+                            (dogChance >= 0.5 ? dogChance : 1 - dogChance) *
+                              100,
+                          )}
+                          % sure
                         </div>
                       </div>
                     )}

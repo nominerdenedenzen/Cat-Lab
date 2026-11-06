@@ -1,33 +1,27 @@
 "use client";
 
-// 🟡 CHANGED: removed `useState` and the `supabase` import.
-// UploadBox runs in the BROWSER, and the browser must never see your secret
-// SUPABASE_SERVICE_ROLE_KEY (it would also be `undefined` here and crash).
-// The upload now happens on the server in src/app/api/photos/route.ts.
 import React, { useRef } from "react";
 import { UploadIcon, Loader2 } from "lucide-react";
 
-// 🟡 CHANGED: the props now match what page.tsx actually passes:
-// `onFilesSelected` (before it was `onPhotoUploaded`, which page.tsx never sent).
 type UploadBoxProps = {
   onFilesSelected: (files: File[]) => void;
-  uploading?: boolean; // page.tsx tells us when it is busy uploading
+  uploading?: boolean;
 };
 
-export const UploadBox = ({ onFilesSelected, uploading = false }: UploadBoxProps) => {
+export const UploadBox = ({
+  onFilesSelected,
+  uploading = false,
+}: UploadBoxProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
-    // 🟡 CHANGED: don't open the file picker again while an upload is running
     if (!uploading) fileInputRef.current?.click();
   };
 
-  // 🟡 CHANGED: this is now very simple — it just hands the chosen files to page.tsx.
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length > 0) onFilesSelected(files);
 
-    // Reset input so the same file can be selected again if needed
     event.target.value = "";
   };
 
