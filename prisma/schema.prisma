@@ -26,3 +26,12 @@ model Photo {
 
     @@map("photo")
 }
+
+model TrainingRun {
+    id        String   @id @default(uuid())
+    rounds    Int
+    accuracy  Float
+    createdAt DateTime @default(now())
+
+    @@map("training_runs")
+}

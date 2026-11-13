@@ -4,7 +4,6 @@ import { supabase } from "../../_lib/supabase";
 
 const BUCKET = "photos";
 
-// GET /api/photos → all photos from the database, each with a public URL
 export async function GET() {
   try {
     const photos = await prisma.photo.findMany({
@@ -23,7 +22,6 @@ export async function GET() {
   }
 }
 
-// POST /api/photos → upload one file to Supabase Storage, then save it in Prisma
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
